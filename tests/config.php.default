@@ -1,0 +1,18 @@
+<?
+/**
+ * Database Connection Configuration
+ */
+$driver = 'mysqli';
+$host = 'localhost';
+$user = 'username';
+$password = 'password';
+$database = 'database';
+$port = '';
+
+/**** Connect below ****/
+require_once('MDB2.php');
+$dsn = "$driver://$user:$password@$host/$database";
+$db =& MDB2::factory($dsn);
+if (PEAR::isError($db)) die($db->getMessage());
+
+?>
