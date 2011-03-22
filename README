@@ -1,0 +1,16 @@
+PHP MasterMold
+
+The MasterMold project is intended to create an easy-to-use interface for basic 
+database data manipulation. You should be able to drop in the MasterMold model
+into your website, extend it to a useful model in your website and use it 
+immediately.
+
+Features:
+    * A Scaffholding mode which lets you make changes to the database table without
+    changing the model's properties.
+    
+    * Fast database access when not using scaffholding mode
+    
+    * Related object data population
+    
+    * Quick and Easy basic CRUD interface.
