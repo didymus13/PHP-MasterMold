@@ -12,25 +12,10 @@ class ScaffholdTestCase extends UnitTestCase {
 		$this->db =& MDB2::factory($dsn, $options);
 		if (PEAR::isError($this->db)) die($this->db->getMessage());
 		return True;
-		
-    	// setup bogus table
-    	$this->db->loadModule('Reverse', null, True);
-    	$fields = array(
-    		'tt_id' => array (
-    			'type' => 'integer',
-    			'unsigned' => True,
-    			'autoincrement' => True),
-    		'tt_label' => array(
-    			'type' => 'text',
-    			'length' => 255), 
-    	);
-    	$this->db->loadModule('Manager', null, true);
-    	$this->db->manager->createTable('test_table', $fields);
 	}
 	
 	function tearDown() {
-		$this->db->loadModule('Manager', null, true);
-		$this->db->manager->dropTable('test_table');
+		return True;
 	}
 	
 	function testInstantiateBlank() {
