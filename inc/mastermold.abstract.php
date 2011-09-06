@@ -41,7 +41,7 @@ abstract class aMasterMold
 			foreach ($tableInfo as $field) {
 				$this->data[$field['name']] = array (
 					'type'	=> $field['mdb2type'],
-					'value'	=> Null,
+					'value'	=> '',
 				);
 			}
 			return true;
