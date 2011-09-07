@@ -63,7 +63,7 @@ abstract class aMasterMold
 		try {
 			if (!array_key_exists($property, $this->data)) 
 				throw new InvalidArgumentException(
-					"Unknown Property: $property" . print_r($this->data, true)
+					"Unknown Property: $property " . print_r($this->data, true)
 				);
 			return $this->data[$property]['value'];
 		} catch (Exception $e) {
