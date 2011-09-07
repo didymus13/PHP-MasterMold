@@ -70,6 +70,14 @@ abstract class aMasterMold
 			throw $e;
 		}
 	}
+	
+	/**
+	 * Validates current data state
+	 * @TODO validate against MDB2 data types
+	 */
+	public function validate() {
+		return true;
+	}
 }
 
 abstract class aMasterList
