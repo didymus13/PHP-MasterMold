@@ -14,5 +14,6 @@ require_once('MDB2.php');
 $dsn = "$driver://$user:$password@$host/$database";
 $db =& MDB2::factory($dsn);
 if (PEAR::isError($db)) die($db->getMessage());
+$db->setFetchMode(MDB2_FETCHMODE_ASSOC);
 
 ?>
