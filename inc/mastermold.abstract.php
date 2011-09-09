@@ -172,11 +172,4 @@ abstract class aMasterMold
 		}
 	}
 }
-
-abstract class aMasterList
-{
-	protected $table = '';
-    protected $pkField = '';
-    protected $model = '';
-}
 ?>

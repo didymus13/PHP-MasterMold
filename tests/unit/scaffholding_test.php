@@ -59,5 +59,30 @@ class ScaffholdTestCase extends UnitTestCase {
 		$this->expectException('Exception');
 		$delS = new ScaffholdTest($this->db, 1);
 	}
+	
+	function testList() {
+		$s = new ScaffholdTest($this->db);
+		$s->tt_id = 1;
+		$s->tt_text = 'lorem ipsum';
+		$this->assertTrue($s->save($this->db, true, true));
+		
+		$s2 = new ScaffholdTest($this->db);
+		$s2->tt_id = 2;
+		$s2->tt_text = 'sit amet';
+		$this->assertTrue($s2->save($this->db, true, true));
+		
+		$list = new ScaffholdListTest($this->db);
+		$this->assertEqual(2, $list->count());
+		
+		$this->assertTrue(is_a($list->current(), 'ScaffholdTest'));
+		$this->assertEqual($s->tt_text, $list->current()->tt_text);
+		
+		$this->expectException('OutOfBoundsException');
+		$list->seek(2);
+		
+		$list->seek(1);
+		$this->assertEqual($s2->tt_text, $list->current()->tt_text);
+		$this->assertNotEqual($s->tt_text, $list->current()->tt_text);
+	}
 }
 ?>

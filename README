@@ -14,3 +14,7 @@ Features:
     * Related object data population
     
     * Quick and Easy basic CRUD interface.
+    
+TESTED MDB2 RDBMS drivers:
+	* MySQL
+	* sqlite
