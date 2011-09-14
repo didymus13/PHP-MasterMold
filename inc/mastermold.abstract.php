@@ -152,6 +152,10 @@ abstract class aMasterMold
 					$types);
 			}
 			if (PEAR::isError($res)) throw new Exception($res->getMessage());
+			
+			if (empty($this->data[$this->pkField]['value'])) {
+				$this->data[$this->pkField]['value'] = $db->lastInsertId($this->table, $this->pkField);
+			}
 			return True;
 		} catch (Exception $e) {
 			throw $e;

@@ -17,7 +17,7 @@ class ScaffholdTestCase extends UnitTestCase {
 			$sql = 'DROP TABLE test_table'; // make sure the table isn't left over from other failed tests
 			$this->db->query($sql);
 			
-			$sql = 'CREATE TABLE test_table (tt_id INTEGER, tt_text TEXT)';
+			$sql = 'CREATE TABLE test_table (tt_id INTEGER PRIMARY KEY, tt_text TEXT)';
 			$res = $this->db->query($sql);
 			if (PEAR::isError($res)) throw new Exception($res->getMessage());
 			return True;
@@ -40,9 +40,9 @@ class ScaffholdTestCase extends UnitTestCase {
 	
 	function testCrud() {
 		$s = new ScaffholdTest($this->db);
-		$s->tt_id = 1;
 		$s->tt_text = 'lorem ipsum';
-		$this->assertTrue($s->save($this->db, True, True));
+		$this->assertTrue($s->save($this->db));
+		$this->assertPattern('/\d+/', $s->tt_id);
 		
 		$getS = new ScaffholdTest($this->db, 1);
 		$this->assertEqual($s->tt_text, $getS->tt_text);
