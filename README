@@ -18,3 +18,6 @@ Features:
 TESTED MDB2 RDBMS drivers:
 	* MySQL
 	* sqlite
+	
+COPYRIGHT
+	All PHP MasterMold source code copyright Stephane Doiron 2011
