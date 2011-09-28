@@ -37,6 +37,9 @@ abstract class aMasterList implements Countable, SeekableIterator
 	
 	public function __construct($db, $limit=null, $offset=null) {
 		try {
+			if (empty($this->table)) throw new Exception('Model Table must be defined');
+			if (empty($this->pkField)) throw new Exception('Model Index Field must be defined');
+			if (empty($this->model)) throw new Exception('Model class must be defined');
 			$this->position = 0;
 			if (!is_a($db, 'MDB2_Driver_Common')) {
 				throw new Exception('Database connection must be via a subclass of MDB2_Driver_Common') ;

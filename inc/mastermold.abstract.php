@@ -39,6 +39,8 @@ abstract class aMasterMold
 	public function __construct($db, $id=null)
 	{
 		try {
+			if (empty($this->table)) throw new Exception('Model Table must be defined');
+			if (empty($this->pkField)) throw new Exception('Model Index Field must be defined');
 			$this->checkConnection($db);
 			if ($this->useScaffhold) $this->initializeData($db);
 			if ($id) $this->getObject($db, $id);
