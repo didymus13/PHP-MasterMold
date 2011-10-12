@@ -101,7 +101,7 @@ abstract class aMasterMold
 	 * sets properties of the object from an array
 	 * @param array $array key value pairs to set as object properties
 	 */
-	private function setProperties($array) {
+	protected function setProperties($array) {
 		foreach (array_keys($this->data) as $field) {
 			$this->$field = $array[$field];
 		}
@@ -133,7 +133,7 @@ abstract class aMasterMold
 		}
 	}
 	
-	private function checkConnection($db) {
+	protected function checkConnection($db) {
 		try {
 			if (!is_a($db, 'MDB2_Driver_Common')) {
 				throw new Exception('Database connection must be via a subclass of MDB2_Driver_Common') ;
