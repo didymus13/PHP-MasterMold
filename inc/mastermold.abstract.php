@@ -103,7 +103,7 @@ abstract class aMasterMold
 	 */
 	protected function setProperties($array) {
 		foreach (array_keys($this->data) as $field) {
-			$this->$field = $array[$field];
+			$this->data[$field]['value'] = $array[$field];
 		}
 		return True;
 	}
