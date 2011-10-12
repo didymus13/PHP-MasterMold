@@ -35,16 +35,20 @@ abstract class aMasterList implements Countable, SeekableIterator
 	protected $modelList = array();
 	private $position = 0;
 	
-	public function __construct($db, $limit=null, $offset=null) {
+	public function __construct($db, $filterProp=null, $filterValue=null, $limit=null, $offset=null) {
 		try {
 			if (empty($this->table)) throw new Exception('Model Table must be defined');
 			if (empty($this->pkField)) throw new Exception('Model Index Field must be defined');
 			if (empty($this->model)) throw new Exception('Model class must be defined');
 			$this->position = 0;
-			if (!is_a($db, 'MDB2_Driver_Common')) {
+			if (!($db instanceof MDB2_Driver_Common)) {
 				throw new Exception('Database connection must be via a subclass of MDB2_Driver_Common') ;
 			}
-			$this->fetchList($db, $limit, $offset);
+			if ($filterProp && $filterValue) {
+				$this->filter($filterProp, $filterValue, $limit, $offset, $db);
+			} else {
+				$this->fetchList($db, $limit, $offset);
+			}
 			return true;
 		} catch (Exception $e) {
 			throw $e;
@@ -83,12 +87,12 @@ abstract class aMasterList implements Countable, SeekableIterator
 		return isset($this->modelList[$this->position]);
 	}
 	
-	protected function fetchList($db, $limit=null, $offset=null) {
+	protected function fetchList($db, $limit=null, $offset=null, $where=null) {
 		try {
 			$types = array($this->pkField => 'integer');
 			$db->loadModule('Extended');
 			$res = $db->extended->autoExecute($this->table, null, MDB2_AUTOQUERY_SELECT,
-				null, null, true, $types);
+				$db->quote($where), null, true, $types);
 			if (PEAR::isERROR($res)) {
 				throw new Exception($res->getMessage(), $res->getCode());	
 			}
@@ -99,5 +103,37 @@ abstract class aMasterList implements Countable, SeekableIterator
 		} catch (Exception $e) {
 			throw $e;
 		}
+	}
+	
+	/**
+	 * Filter function to either fetch a restricted modelset or thin out an existing one
+	 * 
+	 * @param string $prop property to filter on
+	 * @param any $value value to filter on
+	 * @param MDB2_Driver_Common $db optional database connectinon to create
+	 * 								 a modelset directly fromt he database
+	 */
+	public function filter($property, $value, $limit=null, $offset=null, $db=null) {
+		try {
+			if ($db) {
+				if (!($db instanceof MDB2_Driver_Common)) {
+					throw new Exception('Database connection must be via a subclass of MDB2_Driver_Common') ;
+				}
+				$where = "$property = $value";
+				$this->fetchList($db, null, null, $where);
+			} else {
+				$newList = array();
+				foreach ($this as $model) {
+					if ($model->data[$property]['value'] == $value) {
+						$newList[] = $model;
+					}
+				} 
+				$this->modelList = $newList;
+				$this->rewind();
+			}
+		} catch (Exception $e) {
+			throw $e;
+		}
+		return $this;
 	}
 }

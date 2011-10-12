@@ -157,7 +157,7 @@ abstract class aMasterMold
 	
 	protected function checkConnection($db) {
 		try {
-			if (!is_a($db, 'MDB2_Driver_Common')) {
+			if (!($db instanceof MDB2_Driver_Common)) {
 				throw new Exception('Database connection must be via a subclass of MDB2_Driver_Common') ;
 			}
 			return true;

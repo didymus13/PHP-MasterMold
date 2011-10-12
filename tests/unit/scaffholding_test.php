@@ -93,18 +93,49 @@ class ScaffholdTestCase extends UnitTestCase {
 		$new = new ScaffholdTest($this->db, 1);
 		$this->assertEqual($s->tt_text, $new->tt_text);
 		$this->assertEqual($r->tr_text, $new->relatedTest->tr_text);
+
+}
+
+class ScaffholdListTestCase extends UnitTestCase {
+	private $db;
+	
+	public function setUp() {
+		global $dsn, $options;
+		try {
+			$this->db =& MDB2::factory($dsn, $options);
+			if (PEAR::isError($this->db)) throw new Exception($this->db->getMessage());
+			$this->db->setFetchMode(MDB2_FETCHMODE_ASSOC);
+			
+			$sql = 'DROP TABLE test_table'; // make sure the table isn't left over from other failed tests
+			$this->db->query($sql);
+			
+			$sql = 'CREATE TABLE test_table (tt_id INTEGER PRIMARY KEY, tt_text TEXT)';
+			$res = $this->db->query($sql);
+			if (PEAR::isError($res)) throw new Exception($res->getMessage());
+			
+			$s = new ScaffholdTest($this->db);
+			$s->tt_id = 1;
+			$s->tt_text = 'lorem ipsum';
+			$s->save($this->db, true, true);
+			
+			$s2 = new ScaffholdTest($this->db);
+			$s2->tt_id = 2;
+			$s2->tt_text = 'sit amet';
+			$s2->save($this->db, true, true);
+			return True;
+		} catch (Exception $e) {
+			throw $e;
+		}
+	}
+	
+	function tearDown() {
+		$sql = 'DROP TABLE test_table';
+		$res = $this->db->query($sql);
+		if (PEAR::isError($res)) throw new Exception($res->getMessage());
 	}
 	
 	function testList() {
-		$s = new ScaffholdTest($this->db);
-		$s->tt_id = 1;
-		$s->tt_text = 'lorem ipsum';
-		$this->assertTrue($s->save($this->db, true, true));
-		
-		$s2 = new ScaffholdTest($this->db);
-		$s2->tt_id = 2;
-		$s2->tt_text = 'sit amet';
-		$this->assertTrue($s2->save($this->db, true, true));
+		$s = new ScaffholdTest($this->db, 1);
 		
 		$list = new ScaffholdListTest($this->db);
 		$this->assertEqual(2, $list->count());
@@ -118,6 +149,23 @@ class ScaffholdTestCase extends UnitTestCase {
 		$list->seek(1);
 		$this->assertEqual($s2->tt_text, $list->current()->tt_text);
 		$this->assertNotEqual($s->tt_text, $list->current()->tt_text);
+	}
+	
+	function testFilterList() {
+		$filteredList = new ScaffholdListTest($this->db, 'tt_id', 1);
+		$this->assertEqual(1, $filteredList->count());
+		$reFiltered = $filteredList->filter($this->db, 'tt_text', 'lorem ipsum');
+		$this->assertEqual(1, $reFiltered->count());
+		foreach($reFiltered as $test) {
+			$this->assertEqual($test->tt_text, 'lorem ipsum');
+		}
+		$chainFilter = $filteredList->filter('tt_id', 2)
+			->filter('tt_text', 'sit amet');
+		$this->assertEqual(1, $chainFilter->count());
+		
+		$chainFilter2 = $filteredList->filter('tt_id', 1)
+			->filter('tt_text', 'sit amet');
+		$this->assertEqual(0, $chainFilter2->count());
 	}
 }
 ?>
