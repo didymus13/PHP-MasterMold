@@ -74,7 +74,7 @@ abstract class aMasterMold
 	public function getObject($db, $id) {
 		try {
 			if (preg_match('/\D/', $id)) 
-				throw InvalidArgumentException('ID must be numeric');
+				throw new InvalidArgumentException('ID must be numeric');
 			$this->checkConnection($db);
 			
 			foreach ($this->data as $k => $v) {
