@@ -89,14 +89,23 @@ abstract class aMasterMold
 			if ($res->numRows() == 0) throw new Exception('ID not found');
 			$row = $res->fetchRow();
 
-			foreach (array_keys($this->data) as $field) {
-				$this->$field = $row[$field];
-			}
+			$this->setProperties($row);
 			
 			return True;
 		} catch (Exception $e) {
 			throw $e;
 		}
+	}
+	
+	/**
+	 * sets properties of the object from an array
+	 * @param array $array key value pairs to set as object properties
+	 */
+	private function setProperties($array) {
+		foreach (array_keys($this->data) as $field) {
+			$this->$field = $array[$field];
+		}
+		return True;
 	}
 	
 	public function __set($property, $value) {
