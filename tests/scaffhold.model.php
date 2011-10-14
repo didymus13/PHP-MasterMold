@@ -6,6 +6,16 @@ class ScaffholdTest extends aMasterMold
 {
     protected $table = 'test_table';
     protected $pkField = 'tt_id';
+    protected $related = array(
+    	'related_id' => array('model' => 'ScaffholdRelatedTest',
+    						  'name' => 'relatedTest'),
+    );
+}
+
+class ScaffholdRelatedTest extends aMasterMold
+{
+	protected $table = 'test_related';
+	protected $pkField = 'tr_id';
 }
 
 class ScaffholdListTest extends aMasterList
