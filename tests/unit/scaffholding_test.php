@@ -13,11 +13,26 @@ class ScaffholdTestCase extends UnitTestCase {
 			$this->db =& MDB2::factory($dsn, $options);
 			if (PEAR::isError($this->db)) throw new Exception($this->db->getMessage());
 			$this->db->setFetchMode(MDB2_FETCHMODE_ASSOC);
-			
+		} catch (Exception $e) {
+			throw $e;
+		}
+
+		try {
 			$sql = 'DROP TABLE test_table'; // make sure the table isn't left over from other failed tests
-			$this->db->query($sql);
-			
-			$sql = 'CREATE TABLE test_table (tt_id INTEGER PRIMARY KEY, tt_text TEXT)';
+			$res = $this->db->query($sql);
+			if (PEAR::isError($res)) throw new Exception($res->getMessage() );
+			$sql = 'DROP TABLE test_related'; // make sure the table isn't left over from other failed tests
+			$res = $this->db->query($sql);
+			if (PEAR::isError($res)) throw new Exception($res->getMessage() );
+		} catch (Exception $e) {
+			// do nothing if tables don't exist
+		}
+		
+		try {
+			$sql = 'CREATE TABLE test_table (tt_id INTEGER PRIMARY KEY, tt_text TEXT, related_id INTEGER)';
+			$res = $this->db->query($sql);
+			if (PEAR::isError($res)) throw new Exception($res->getMessage());
+			$sql = 'CREATE TABLE test_related (tr_id INTEGER PRIMARY KEY, tr_text TEXT)';
 			$res = $this->db->query($sql);
 			if (PEAR::isError($res)) throw new Exception($res->getMessage());
 			return True;
@@ -28,6 +43,9 @@ class ScaffholdTestCase extends UnitTestCase {
 	
 	function tearDown() {
 		$sql = 'DROP TABLE test_table';
+		$res = $this->db->query($sql);
+		if (PEAR::isError($res)) throw new Exception($res->getMessage());
+		$sql = 'DROP TABLE test_related';
 		$res = $this->db->query($sql);
 		if (PEAR::isError($res)) throw new Exception($res->getMessage());
 	}
@@ -58,6 +76,23 @@ class ScaffholdTestCase extends UnitTestCase {
 		$this->assertTrue($updS->delete($this->db));
 		$this->expectException('Exception');
 		$delS = new ScaffholdTest($this->db, 1);
+	}
+	
+	function testRelated() {
+		$r = new ScaffholdRelatedTest($this->db);
+		$r->tr_id = 1;
+		$r->tr_text = 'dolor sit amet';
+		$this->assertTrue($r->save($this->db, True, True));
+		
+		$s = new ScaffholdTest($this->db);
+		$s->tt_id = 1;
+		$s->tt_text = 'lorem ipsum';
+		$s->related_id = $r->tr_id;
+		$this->assertTrue($s->save($this->db, true, true));
+		
+		$new = new ScaffholdTest($this->db, 1);
+		$this->assertEqual($s->tt_text, $new->tt_text);
+		$this->assertEqual($r->tr_text, $new->relatedTest->tr_text);
 	}
 	
 	function testList() {

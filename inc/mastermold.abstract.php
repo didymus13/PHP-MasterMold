@@ -34,7 +34,15 @@ abstract class aMasterMold
 	protected $table = '';
     protected $pkField = '';
 	protected $data = array();
-	protected $related = array();
+	
+	/**
+	 * Related Objects 
+	 * 
+	 * @var array $related A multidimentional array $related[property][model|name]
+	 * @var array $relatedObjects array of name => instantiated models
+	 */
+	protected $related = array(); // List of related fields => model name
+	protected $relatedObjects = array(); // List of model_name => Populated Related Object
 	
 	public function __construct($db, $id=null)
 	{
@@ -43,7 +51,10 @@ abstract class aMasterMold
 			if (empty($this->pkField)) throw new Exception('Model Index Field must be defined');
 			$this->checkConnection($db);
 			if ($this->useScaffhold) $this->initializeData($db);
-			if ($id) $this->getObject($db, $id);
+			if ($id) {
+				$this->getObject($db, $id);
+				if (count($this->related) > 0) $this->getRelated($db);
+			}
 			return true;
 		} catch (Exception $e) {
 			throw $e;
@@ -108,6 +119,18 @@ abstract class aMasterMold
 		return True;
 	}
 	
+	protected function getRelated($db) {
+		try {
+			$this->checkConnection($db);
+			foreach ($this->related as $k=>$v) {
+				$this->relatedObjects[$v['name']] = new $v['model']($db, $this->data[$k]['value']);
+			}
+			return True;
+		} catch (Exception $e) {
+			throw $e;
+		}
+	}
+	
 	public function __set($property, $value) {
 		try {
 			if (!array_key_exists($property, $this->data)) 
@@ -122,15 +145,14 @@ abstract class aMasterMold
 	}
 	
 	public function __get($property) {
-		try {
-			if (!array_key_exists($property, $this->data)) 
-				throw new InvalidArgumentException(
-					"Unknown Property: $property " . print_r($this->data, true)
-				);
+		// is it a property?
+		if (array_key_exists($property, $this->data)) 
 			return $this->data[$property]['value'];
-		} catch (Exception $e) {
-			throw $e;
-		}
+		// is it related?
+		if (array_key_exists($property, $this->relatedObjects))
+			return $this->relatedObjects[$property];
+
+		throw new InvalidArgumentException("Unknown property: $property");
 	}
 	
 	protected function checkConnection($db) {
