@@ -35,17 +35,16 @@ abstract class aMasterList implements Countable, SeekableIterator
 	protected $modelList = array();
 	private $position = 0;
 	
-	public function __construct($db, $filterProp=null, $filterValue=null, $limit=null, $offset=null) {
+	public function __construct($db, $limit=null, $offset=null, $filter=null, $pattern=null) {
 		try {
 			if (empty($this->table)) throw new Exception('Model Table must be defined');
 			if (empty($this->pkField)) throw new Exception('Model Index Field must be defined');
 			if (empty($this->model)) throw new Exception('Model class must be defined');
+			$this->checkConnection($db);
+			
 			$this->position = 0;
-			if (!($db instanceof MDB2_Driver_Common)) {
-				throw new Exception('Database connection must be via a subclass of MDB2_Driver_Common') ;
-			}
-			if ($filterProp && $filterValue) {
-				$this->filter($filterProp, $filterValue, $limit, $offset, $db);
+			if ($filter && $pattern) {
+				$this->fetchFilteredList($db, $limit, $offset, $filter, $pattern);
 			} else {
 				$this->fetchList($db, $limit, $offset);
 			}
@@ -53,6 +52,11 @@ abstract class aMasterList implements Countable, SeekableIterator
 		} catch (Exception $e) {
 			throw $e;
 		}
+	}
+	
+	protected function checkConnection($db) {
+		if (!($db instanceof MDB2_Driver_Common))
+			throw new Exception('Database connection must be via a subclass of MDB2_Driver_Common') ;
 	}
 	
 	public function count() {
@@ -87,17 +91,18 @@ abstract class aMasterList implements Countable, SeekableIterator
 		return isset($this->modelList[$this->position]);
 	}
 	
-	protected function fetchList($db, $limit=null, $offset=null, $where=null) {
+	protected function fetchList($db, $limit=null, $offset=null) {
 		try {
+			$this->checkConnection($db);
 			$types = array($this->pkField => 'integer');
 			$db->loadModule('Extended');
 			$res = $db->extended->autoExecute($this->table, null, MDB2_AUTOQUERY_SELECT,
-				$db->quote($where), null, true, $types);
-			if (PEAR::isERROR($res)) {
-				throw new Exception($res->getMessage(), $res->getCode());	
-			}
+				null, null, true, $types);
+			
+			if (PEAR::isERROR($res)) throw new Exception($res->getMessage());	
+			
 			while ($row = $res->fetchRow()) {
-				$this->modelList[] = new $this->model($db, $row[$this->pkField]); 
+				$this->modelList[] = new $this->model($db, $row[$this->pkField]);
 			}
 			return true;
 		} catch (Exception $e) {
@@ -105,35 +110,39 @@ abstract class aMasterList implements Countable, SeekableIterator
 		}
 	}
 	
-	/**
-	 * Filter function to either fetch a restricted modelset or thin out an existing one
-	 * 
-	 * @param string $prop property to filter on
-	 * @param any $value value to filter on
-	 * @param MDB2_Driver_Common $db optional database connectinon to create
-	 * 								 a modelset directly fromt he database
-	 */
-	public function filter($property, $value, $limit=null, $offset=null, $db=null) {
+	protected function fetchFilteredList($db, $limit, $offset, $filter, $pattern) {
 		try {
-			if ($db) {
-				if (!($db instanceof MDB2_Driver_Common)) {
-					throw new Exception('Database connection must be via a subclass of MDB2_Driver_Common') ;
-				}
-				$where = "$property = $value";
-				$this->fetchList($db, null, null, $where);
-			} else {
-				$newList = array();
-				foreach ($this as $model) {
-					if ($model->data[$property]['value'] == $value) {
-						$newList[] = $model;
-					}
-				} 
-				$this->modelList = $newList;
-				$this->rewind();
+			$this->checkConnection($db);
+			$types = array($this->pkField => 'integer');
+			$db->loadModule('Extended');
+			$res = $db->extended->autoExecute($this->table, null, MDB2_AUTOQUERY_SELECT,
+				$db->quoteIdentifier($filter) . ' = ' . $db->quote($pattern), 
+				null, true, $types);
+				
+			if (PEAR::isError($res)) throw new Exception($res->getMessage());
+			
+			while ($row = $res->fetchRow()) {
+				$this->modelList[] = new $this->model($db, $row[$this->pkField]);
 			}
+			return true;
+		} catch (Exception $e) {
+			throw $e;
+		} 
+	}
+	
+
+	public function filter($property, $value) {
+		try {
+			if (!$property) throw new Exception('Filter field must be specified');
+			$newList = array();
+			foreach($this->modelList as $item) {
+				if ($item->$property == $value) $newList[] = $item;
+			}
+			$this->modelList = $newList;
+			$this->rewind();
+			return $this;
 		} catch (Exception $e) {
 			throw $e;
 		}
-		return $this;
 	}
 }
