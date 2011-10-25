@@ -33,9 +33,10 @@ abstract class aMasterList implements Countable, SeekableIterator
 	protected $pkField = '';
 	protected $model = ''; // MasterMold model to use
 	protected $modelList = array();
+	protected $ordering = array(); // key / direction (ASC, DESC)
 	private $position = 0;
 	
-	public function __construct($db, $limit=null, $offset=null, $filter=null, $pattern=null) {
+	public function __construct($db, $filter=null, $pattern=null, $limit=null, $offset=null) {
 		try {
 			if (empty($this->table)) throw new Exception('Model Table must be defined');
 			if (empty($this->pkField)) throw new Exception('Model Index Field must be defined');
@@ -44,9 +45,9 @@ abstract class aMasterList implements Countable, SeekableIterator
 			
 			$this->position = 0;
 			if ($filter && $pattern) {
-				$this->fetchFilteredList($db, $limit, $offset, $filter, $pattern);
+				$this->fetchFiltered($db, $filter, $pattern, $limit, $offset);
 			} else {
-				$this->fetchList($db, $limit, $offset);
+				$this->fetchAll($db, $limit, $offset);
 			}
 			return true;
 		} catch (Exception $e) {
@@ -91,39 +92,64 @@ abstract class aMasterList implements Countable, SeekableIterator
 		return isset($this->modelList[$this->position]);
 	}
 	
-	protected function fetchList($db, $limit=null, $offset=null) {
+	/**
+	 * Query the database and repopulate the model list 
+	 * @param $db MDB2 connection
+	 * @param $sql Query to execute
+	 */
+	protected function initList($db, $sql, $limit, $offset) {
 		try {
+			unset($this->modelList);
 			$this->checkConnection($db);
-			$types = array($this->pkField => 'integer');
-			$db->loadModule('Extended');
-			$res = $db->extended->autoExecute($this->table, null, MDB2_AUTOQUERY_SELECT,
-				null, null, true, $types);
-			
-			if (PEAR::isERROR($res)) throw new Exception($res->getMessage());	
+			$sql = $this->queryMeta($db, $sql, $limit, $offset);
+			$res = $db->query($sql);
+			if (PEAR::isERROR($res)) throw new Exception($res->getMessage());
 			
 			while ($row = $res->fetchRow()) {
 				$this->modelList[] = new $this->model($db, $row[$this->pkField]);
 			}
+			return true;
+			
+		} catch (Exception $e) {
+			throw $e;
+		}
+	}
+	
+	protected function queryMeta($db, $sql, $limit, $offset) {
+		if (count($this->ordering) > 0) {
+			foreach($this->ordering as $field => $dir) {
+				$orderSql[] =  $field . ' ' . $dir;
+			}
+			$sql = $sql . ' ORDER BY ' . join($orderSql, ',') .' ';
+		}
+		if ($limit) $sql = $sql . ' LIMIT ' . $db->quote($limit, 'integer');
+		if ($offset) $sql = $sql . ' OFFSET ' . $db->quote($offset, 'integer');
+		return $sql;
+	}
+	
+	protected function fetchAll($db, $limit=null, $offset=null) {
+		try {
+			$this->checkConnection($db);
+			
+			$sql = 'select ' . $this->pkField . ' from ' . $this->table;
+			$this->initList($db, $sql, $limit, $offset);
+			
 			return true;
 		} catch (Exception $e) {
 			throw $e;
 		}
 	}
 	
-	protected function fetchFilteredList($db, $limit, $offset, $filter, $pattern) {
+	protected function fetchFiltered($db, $filter, $pattern, $limit=null, $offset=null) {
 		try {
 			$this->checkConnection($db);
-			$types = array($this->pkField => 'integer');
-			$db->loadModule('Extended');
-			$res = $db->extended->autoExecute($this->table, null, MDB2_AUTOQUERY_SELECT,
-				$db->quoteIdentifier($filter) . ' = ' . $db->quote($pattern), 
-				null, true, $types);
-				
-			if (PEAR::isError($res)) throw new Exception($res->getMessage());
 			
-			while ($row = $res->fetchRow()) {
-				$this->modelList[] = new $this->model($db, $row[$this->pkField]);
-			}
+			$sql = 'select ' . $this->pkField . ' from ' . $this->table 
+				.' WHERE ' . $db->quoteIdentifier($filter) 
+				. ' = ' . $db->quote($pattern);
+				
+			$this->initList($db, $sql, $limit, $offset);
+			
 			return true;
 		} catch (Exception $e) {
 			throw $e;

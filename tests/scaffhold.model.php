@@ -23,5 +23,8 @@ class ScaffholdListTest extends aMasterList
 	protected $table = 'test_table';
 	protected $pkField = 'tt_id';
 	protected $model = 'ScaffholdTest';
+	protected $ordering = array(
+		'tt_text' => 'ASC',
+	);
 }
 ?>
