@@ -155,7 +155,7 @@ class ScaffholdListTestCase extends UnitTestCase {
 	}
 	
 	function testFilteredList() {
-		$list = new ScaffholdListTest($this->db, null, null, 'tt_text', 'lorem ipsum');
+		$list = new ScaffholdListTest($this->db, 'tt_text', 'lorem ipsum');
 		$this->assertEqual($list->count(), 1);
 		$this->assertEqual($list->current()->tt_text, 'lorem ipsum');
 		
@@ -166,6 +166,20 @@ class ScaffholdListTestCase extends UnitTestCase {
 		$this->assertEqual($filterList->current()->tt_text, 'lorem ipsum');
 		$filterList->filter('tt_id', 1)->filter('tt_text', 'sit amet');
 		$this->assertEqual($filterList->count(), 0);
+	}
+	
+	function testOrderedList() {
+		$s = new ScaffholdTest($this->db);
+		$s->tt_text = 'abacab';
+		$s->save($this->db);
+		
+		$list = new ScaffholdListTest($this->db);
+		$this->assertEqual(count($list), 3);
+		$this->assertEqual($list->current()->tt_text, 'abacab');
+		$list->next();
+		$this->assertEqual($list->current()->tt_text, 'lorem ipsum');
+		$list->next();
+		$this->assertEqual($list->current()->tt_text, 'sit amet');
 	}
 }
 ?>
