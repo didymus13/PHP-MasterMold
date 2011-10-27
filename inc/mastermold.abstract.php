@@ -206,9 +206,16 @@ abstract class aMasterMold
 			}
 			if (PEAR::isError($res)) throw new Exception($res->getMessage());
 			
+			// Get ID if new save
 			if (empty($this->data[$this->pkField]['value'])) {
 				$this->data[$this->pkField]['value'] = $db->lastInsertId($this->table, $this->pkField);
 			}
+			
+			// Get all related objects if needed
+			if (count($this->related) > 0) {
+				$this->getRelated($db);
+			}
+			
 			return True;
 		} catch (Exception $e) {
 			throw $e;

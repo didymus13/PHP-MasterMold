@@ -89,6 +89,7 @@ class ScaffholdTestCase extends UnitTestCase {
 		$s->tt_text = 'lorem ipsum';
 		$s->related_id = $r->tr_id;
 		$this->assertTrue($s->save($this->db, true, true));
+		$this->assertEqual($s->relatedTest->tr_text, $r->tr_text);
 		
 		$new = new ScaffholdTest($this->db, 1);
 		$this->assertEqual($s->tt_text, $new->tt_text);
